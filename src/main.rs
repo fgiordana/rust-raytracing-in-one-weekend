@@ -9,7 +9,8 @@ use rayon::prelude::*;
 use minifb::{Key, Window, WindowOptions};
 
 
-mod raytrace;
+mod rendering;
+mod raytracing;
 mod scene;
 mod hittable;
 mod geometry;
@@ -17,7 +18,8 @@ mod camera;
 mod material;
 mod util;
 
-use crate::raytrace::ray_color;
+use crate::rendering::{Config, render};
+use crate::raytracing::ray_color;
 use crate::camera::Camera;
 use crate::hittable::Hittable;
 use crate::scene::{test_scene, random_scene};
@@ -57,7 +59,7 @@ fn main() -> Result<(), Error> {
     let focus_dist = 10.0;
     let aperture = 0.1;
 
-    let cam = Camera::new(
+    let camera = Camera::new(
         lookfrom,
         lookat,
         vec3(0.0, 1.0, 0.0),
@@ -73,37 +75,12 @@ fn main() -> Result<(), Error> {
 
     let begin_t = time::Instant::now();
 
-    let mut buffer = vec!(0; image_width * image_height);
-
-    let black = Rgb::new(0.0, 0.0, 0.0);
-
-    (0..image_height).cartesian_product(0..image_width)
-        .collect::<Vec<(usize, usize)>>()
-        .into_par_iter()
-        .map(|coords| {
-            let x = coords.1 as f64;
-            let y = coords.0 as f64;
-
-            let pixel_color = (0..samples_per_pixel)
-                .into_par_iter()
-                .map(|s| {
-                    let mut rng = rand::thread_rng();
-                    let u = (x + rng.gen::<f64>()) / (image_width - 1) as f64;
-                    let v = 1.0 - (y + rng.gen::<f64>()) / (image_height - 1) as f64;
-                    let r = cam.get_ray(u, v);
-                    ray_color(&r, &world, max_depth)
-                })
-                .reduce(|| black,
-                       |a, b| Rgb::new(
-                           a.red() + b.red(),
-                           a.green() + b.green(),
-                           a.blue() + b.blue()
-                       )
-                );
-
-            to_color(&pixel_color, samples_per_pixel)
-        })
-        .collect_into_vec(&mut buffer);
+    let buffer = render(&world, &camera, &Config::new(
+        image_width,
+        image_height,
+        samples_per_pixel,
+        max_depth
+    ));
 
     let duration = begin_t.elapsed();
 

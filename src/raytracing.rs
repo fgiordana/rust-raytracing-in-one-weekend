@@ -4,7 +4,7 @@ use prisma::{Rgb, Lerp};
 use crate::hittable::{Ray, Hittable, HitRecord};
 
 
-pub fn ray_color(r: &Ray, world: &Box<dyn Hittable>, depth: i32) -> Rgb<f64> {
+pub fn ray_color(r: &Ray, world: &Box<dyn Hittable>, depth: usize) -> Rgb<f64> {
     let mut rec = HitRecord::new();
 
     if depth <= 0 {

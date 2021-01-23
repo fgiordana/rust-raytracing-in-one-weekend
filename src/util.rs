@@ -77,7 +77,7 @@ pub fn vec_mul(v1: &Vector3<f64>, v2: &Vector3<f64>) -> Vector3<f64> {
 }
 
 
-pub fn to_color(value: &Rgb<f64>, num_samples: u32) -> u32 {
+pub fn to_color(value: &Rgb<f64>, num_samples: usize) -> u32 {
     let scale = 1.0 / num_samples as f64;
     let r = (value.red() * scale).sqrt();
     let g = (value.green() * scale).sqrt();
