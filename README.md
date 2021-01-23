@@ -3,3 +3,6 @@ Rust implementation of the Raytracing in one Weekend course
 
 Link to online books
 https://raytracing.github.io/
+
+Example image
+![Random spheres](/random_spheres.png?raw=true "Random Spheres")
