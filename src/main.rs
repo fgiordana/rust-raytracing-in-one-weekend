@@ -2,10 +2,6 @@ use std::io::{Error};
 use std::{thread, time};
 use std::iter::once;
 use cgmath::{point3, vec3};
-use prisma::Rgb;
-use rand::Rng;
-use itertools::Itertools;
-use rayon::prelude::*;
 use minifb::{Key, Window, WindowOptions};
 
 
@@ -19,11 +15,10 @@ mod material;
 mod util;
 
 use crate::rendering::{Config, render};
-use crate::raytracing::ray_color;
 use crate::camera::Camera;
 use crate::hittable::Hittable;
-use crate::scene::{test_scene, random_scene};
-use crate::util::{to_color, to_rgb};
+use crate::scene::random_scene;
+use crate::util::{to_rgb};
 
 
 fn main() -> Result<(), Error> {

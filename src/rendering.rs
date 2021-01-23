@@ -39,7 +39,7 @@ pub fn render(world: &Box<dyn Hittable>, camera: &Camera, config: &Config) -> Ve
 
             let pixel_color = (0..config.samples_per_pixel)
                 .into_par_iter()
-                .map(|s| {
+                .map(|_| {
                     let mut rng = rand::thread_rng();
                     let u = (x + rng.gen::<f64>()) / (config.image_width - 1) as f64;
                     let v = 1.0 - (y + rng.gen::<f64>()) / (config.image_height - 1) as f64;
