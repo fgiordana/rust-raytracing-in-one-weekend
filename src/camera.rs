@@ -1,6 +1,6 @@
 use cgmath::{Point3, Vector3, InnerSpace};
 
-use crate::hittable::Ray;
+use crate::raytracing::Ray;
 use crate::util::random_vec_in_unit_disk;
 
 
@@ -54,7 +54,7 @@ impl Camera {
         }
     }
 
-    pub fn get_ray(&self, s: f64, t:f64) -> Ray {
+    pub fn get_ray(&self, s: f64, t:f64, time: f64) -> Ray {
         let rd = random_vec_in_unit_disk() * self.lens_radius;
         let offset = self.u * rd.x + self.v * rd.y;
 

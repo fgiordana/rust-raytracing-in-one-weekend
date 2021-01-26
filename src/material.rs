@@ -2,7 +2,8 @@ use cgmath::{Vector3, InnerSpace};
 use prisma::Rgb;
 use rand::Rng;
 
-use crate::hittable::{Ray, HitRecord};
+use crate::raytracing::Ray;
+use crate::hittable::HitRecord;
 use crate::util::{random_unit_vec, vec_near_zero, random_vec_in_unit_sphere};
 
 
@@ -45,7 +46,7 @@ impl Lambertian {
 
 impl Material for Lambertian {
 
-    fn scatter(&self, _r: &Ray, rec: &HitRecord, attenuation: &mut Rgb<f64>,
+    fn scatter(&self, r: &Ray, rec: &HitRecord, attenuation: &mut Rgb<f64>,
                scattered: &mut Ray) -> bool {
 
         let mut scatter_direction = rec.normal + random_unit_vec();
@@ -54,7 +55,7 @@ impl Material for Lambertian {
             scatter_direction = rec.normal;
         }
 
-        *scattered = Ray { origin: rec.p, dir: scatter_direction };
+        *scattered = Ray { origin: rec.p, dir: scatter_direction};
         *attenuation = self.albedo;
         true
     }
@@ -84,7 +85,10 @@ impl Material for Metal {
                scattered: &mut Ray) -> bool {
 
         let reflected = reflect(&r.dir.normalize(), &rec.normal);
-        *scattered = Ray { origin: rec.p, dir: reflected + random_vec_in_unit_sphere() * self.fuzz };
+        *scattered = Ray {
+            origin: rec.p,
+            dir: reflected + random_vec_in_unit_sphere() * self.fuzz
+        };
         *attenuation = self.albedo;
         scattered.dir.dot(rec.normal) > 0.0
     }
@@ -125,7 +129,7 @@ impl Material for Dielectric {
             refract(&unit_direction, &rec.normal, refraction_ratio)
         };
 
-        *scattered = Ray {origin: rec.p, dir: direction};
+        *scattered = Ray { origin: rec.p, dir: direction };
         true
     }
 

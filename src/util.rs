@@ -91,3 +91,12 @@ pub fn to_rgb(color: u32) -> [u8; 3] {
         color as u8
     ]
 }
+
+
+pub fn add_colors(a: &Rgb<f64>, b: &Rgb<f64>) -> Rgb<f64> {
+    Rgb::new(
+        a.red() + b.red(),
+        a.green() + b.green(),
+        a.blue() + b.blue()
+    )
+}

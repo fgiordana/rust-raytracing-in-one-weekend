@@ -5,18 +5,20 @@ use cgmath::{point3, vec3};
 use minifb::{Key, Window, WindowOptions};
 
 
-mod rendering;
-mod raytracing;
-mod scene;
-mod hittable;
-mod geometry;
+mod animation;
 mod camera;
+mod geometry;
+mod hittable;
 mod material;
+mod raytracing;
+mod rendering;
+mod scene;
 mod util;
 
-use crate::rendering::{Config, render};
+
 use crate::camera::Camera;
 use crate::hittable::Hittable;
+use crate::rendering::{Config, render};
 use crate::scene::random_scene;
 use crate::util::{to_rgb};
 
@@ -26,10 +28,13 @@ fn main() -> Result<(), Error> {
     // Image
 
     let image_path = "image.png";
-    let aspect_ratio = 3.0 / 2.0;
+    let aspect_ratio = 16.0 / 9.0;
     let image_width: usize = 400;
     let image_height: usize = (image_width as f64 / aspect_ratio) as usize;
     let samples_per_pixel = 100;
+    let time_samples = 5;
+    let time0 = 0.0;
+    let time1 = 0.5;
     let max_depth = 50;
 
     // Window
@@ -45,7 +50,7 @@ fn main() -> Result<(), Error> {
 
     // World
 
-    let world: Box<dyn Hittable> = Box::new(random_scene());
+    let mut world = random_scene();
 
     // Camera
 
@@ -70,10 +75,11 @@ fn main() -> Result<(), Error> {
 
     let begin_t = time::Instant::now();
 
-    let buffer = render(&world, &camera, &Config::new(
+    let buffer = render(&mut world, &camera, time0, time1, &Config::new(
         image_width,
         image_height,
         samples_per_pixel,
+        time_samples,
         max_depth
     ));
 

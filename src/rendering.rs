@@ -1,34 +1,59 @@
 use prisma::Rgb;
 use itertools::Itertools;
 use rayon::prelude::*;
-use rand::Rng;
+use rand::{Rng, thread_rng};
 
 use crate::hittable::Hittable;
+use crate::scene::{SceneObject, World};
 use crate::camera::Camera;
 use crate::raytracing::ray_color;
-use crate::util::to_color;
+use crate::util::{add_colors, to_color};
+use crate::animation::Animated;
 
 
 pub struct Config {
     image_width: usize,
     image_height: usize,
     samples_per_pixel: usize,
+    time_samples: usize,
     max_depth: usize
 }
 
 impl Config {
     pub fn new(image_width: usize, image_height: usize, samples_per_pixel: usize,
-        max_depth: usize) -> Self {
-        Config {image_width, image_height, samples_per_pixel, max_depth}
+        time_samples: usize, max_depth: usize) -> Self {
+        Config {image_width, image_height, samples_per_pixel, time_samples, max_depth}
     }
 }
 
 
-pub fn render(world: &Box<dyn Hittable>, camera: &Camera, config: &Config) -> Vec<u32> {
-
-    let mut buffer = vec!(0; config.image_width * config.image_height);
+pub fn render(world: &mut World, camera: &Camera, time0: f64, time1: f64,
+              config: &Config) -> Vec<u32> {
 
     let black = Rgb::new(0.0, 0.0, 0.0);
+    let mut image = vec!(black; config.image_width * config.image_height);
+
+    let k = (time1 - time0) as f64 / config.time_samples as f64;
+    for ts in 0..config.time_samples {
+        let time = time0 + (ts as f64 * k);
+        world.update(time);
+
+        let buffer = render_time_sample(world, camera, time, config);
+
+        image = image.iter().zip(buffer.iter())
+            .map(|(&i, &b)| add_colors(&i, &b))
+            .collect()
+    }
+
+    let n = config.samples_per_pixel * config.time_samples;
+    image.iter().map(|&i| to_color(&i, n)).collect()
+}
+
+
+fn render_time_sample(world: &mut World, camera: &Camera, time: f64, config: &Config) -> Vec<Rgb<f64>> {
+
+    let black = Rgb::new(0.0, 0.0, 0.0);
+    let mut buffer = vec!(black; config.image_width * config.image_height);
 
     (0..config.image_height).cartesian_product(0..config.image_width)
         .collect::<Vec<(usize, usize)>>()
@@ -37,24 +62,19 @@ pub fn render(world: &Box<dyn Hittable>, camera: &Camera, config: &Config) -> Ve
             let x = coords.1 as f64;
             let y = coords.0 as f64;
 
-            let pixel_color = (0..config.samples_per_pixel)
+            (0..config.samples_per_pixel)
                 .into_par_iter()
                 .map(|_| {
                     let mut rng = rand::thread_rng();
-                    let u = (x + rng.gen::<f64>()) / (config.image_width - 1) as f64;
-                    let v = 1.0 - (y + rng.gen::<f64>()) / (config.image_height - 1) as f64;
-                    let r = camera.get_ray(u, v);
-                    ray_color(&r, world, config.max_depth)
+
+                    let s = (x + rng.gen::<f64>()) / (config.image_width - 1) as f64;
+                    let t = 1.0 - (y + rng.gen::<f64>()) / (config.image_height - 1) as f64;
+                    let r = camera.get_ray(s, t, time);
+                    ray_color(&r, world as &dyn SceneObject, config.max_depth)
                 })
                 .reduce(|| black,
-                        |a, b| Rgb::new(
-                            a.red() + b.red(),
-                            a.green() + b.green(),
-                            a.blue() + b.blue()
-                        )
-                );
-
-            to_color(&pixel_color, config.samples_per_pixel)
+                        |a, b| add_colors(&a, &b)
+                )
         })
         .collect_into_vec(&mut buffer);
 

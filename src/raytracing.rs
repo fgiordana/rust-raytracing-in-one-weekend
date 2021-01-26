@@ -1,22 +1,44 @@
-use cgmath::{InnerSpace};
+use cgmath::{Point3, Vector3, InnerSpace, point3, vec3};
 use prisma::{Rgb, Lerp};
 
-use crate::hittable::{Ray, Hittable, HitRecord};
+use crate::hittable::{Hittable, HitRecord};
+use crate::scene::SceneObject;
 
 
-pub fn ray_color(r: &Ray, world: &Box<dyn Hittable>, depth: usize) -> Rgb<f64> {
+pub struct Ray {
+    pub origin: Point3<f64>,
+    pub dir: Vector3<f64>
+}
+
+impl Ray {
+
+    pub fn new() -> Self {
+        Ray {
+            origin: point3(0.0, 0.0, 0.0),
+            dir: vec3(0.0, 0.0, 0.0),
+        }
+    }
+
+    pub fn at(&self, t: f64) -> Point3<f64> {
+        self.origin + self.dir * t
+    }
+
+}
+
+
+pub fn ray_color(r: &Ray, object: &dyn SceneObject, depth: usize) -> Rgb<f64> {
     let mut rec = HitRecord::new();
 
     if depth <= 0 {
         return Rgb::new(0.0, 0.0, 0.0)
     }
 
-    if world.hit(&r, 0.001, std::f64::INFINITY, &mut rec) {
+    if object.hit(&r, 0.001, std::f64::INFINITY, &mut rec) {
         let mut scattered = Ray::new();
         let mut attenuation = Rgb::new(0.0, 0.0, 0.0);
         let material = rec.material.clone();
         if material.unwrap().scatter(r, &rec, &mut attenuation, &mut scattered) {
-            let color = ray_color(&mut scattered, world, depth - 1);
+            let color = ray_color(&mut scattered, object, depth - 1);
             return Rgb::new(
                 attenuation.red() * color.red(),
                 attenuation.green() * color.green(),

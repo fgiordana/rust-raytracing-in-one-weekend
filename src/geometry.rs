@@ -1,6 +1,8 @@
 use cgmath::{Point3, InnerSpace};
 
-use crate::hittable::{Ray, HitRecord, Hittable};
+use crate::animation::Animated;
+use crate::raytracing::Ray;
+use crate::hittable::{HitRecord, Hittable};
 use crate::material::Material;
 use std::sync::Arc;
 
@@ -39,6 +41,49 @@ impl Hittable for Sphere {
         let outward_normal = (rec.p - self.center) / self.radius;
         rec.set_face_normal(r, &outward_normal);
         true
+    }
+
+}
+
+impl Animated for Sphere {
+
+    fn update(&mut self, time: f64) {}
+
+}
+
+
+pub struct AnimatedSphere {
+    center0: Point3<f64>,
+    center1: Point3<f64>,
+    time0: f64,
+    time1: f64,
+    sphere: Sphere
+}
+
+impl AnimatedSphere {
+
+    pub fn new(center0: Point3<f64>, center1: Point3<f64>, time0: f64, time1: f64, radius: f64,
+               mat: Arc<dyn Material>) -> Self {
+        AnimatedSphere {
+            center0, center1, time0, time1, sphere: Sphere {center: center0, radius, mat}
+        }
+    }
+
+}
+
+impl Hittable for AnimatedSphere {
+
+    fn hit(&self, r: &Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool {
+        self.sphere.hit(r, t_min, t_max, rec)
+    }
+
+}
+
+impl Animated for AnimatedSphere {
+
+    fn update(&mut self, time: f64) {
+        self.sphere.center = self.center0 + ((time - self.time0) / (self.time1 - self.time0))
+            * (self.center1 - self.center0);
     }
 
 }
